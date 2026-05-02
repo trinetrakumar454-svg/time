@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: black;
+            margin: 0;
+        }
+        canvas {
+            border: 1px solid white;
+        }
+        #score {
+            color: white;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pong" width="800" height="400"></canvas>
+    <div id="score"></div>
+    <script>
+        const canvas = document.getElementById('pong');
+        const context = canvas.getContext('2d');
+
+        // Create the pong paddle
+        const paddleWidth = 10, paddleHeight = 100;
+        const player = {
+            x: 0,
+            y: canvas.height / 2 - paddleHeight / 2,
+            width: paddleWidth,
+            height: paddleHeight,
+            color: 'white',
+            dy: 0
+        };
+
+        const ai = {
+            x: canvas.width - paddleWidth,
+            y: canvas.height / 2 - paddleHeight / 2,
+            width: paddleWidth,
+            height: paddleHeight,
+            color: 'red',
+            dy: 4
+        };
+
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            size: 10,
+            speed: 4,
+            dx: 4,
+            dy: 4,
+            color: 'white'
+        };
+
+        // Draw everything
+        function draw() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = player.color;
+            context.fillRect(player.x, player.y, player.width, player.height);
+            context.fillStyle = ai.color;
+            context.fillRect(ai.x, ai.y, ai.width, ai.height);
+            context.fillStyle = ball.color;
+            context.beginPath();
+            context.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2, false);
+            context.fill();
+            context.closePath();
+        }
+
+        // Update the game
+        function update() {
+            // Move the ball
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // Ball collision with top and bottom
+            if (ball.y + ball.size > canvas.height || ball.y - ball.size < 0) {
+                ball.dy *= -1;
+            }
+
+            // Ball collision with paddles
+            if ((ball.x - ball.size < player.x + player.width && ball.y > player.y && ball.y < player.y + player.height) || 
+                (ball.x + ball.size > ai.x && ball.y > ai.y && ball.y < ai.y + ai.height)) {
+                ball.dx *= -1;
+            }
+
+            // Reset ball if it goes to the sides
+            if (ball.x + ball.size < 0 || ball.x - ball.size > canvas.width) {
+                ball.x = canvas.width / 2;
+                ball.y = canvas.height / 2;
+                ball.dx = -ball.dx;
+            }
+
+            // AI movement
+            if (ball.y > ai.y + ai.height / 2) {
+                ai.y += ai.dy;
+            } else {
+                ai.y -= ai.dy;
+            }
+
+            // Keep AI paddle within canvas
+            if (ai.y < 0) ai.y = 0;
+            if (ai.y + ai.height > canvas.height) ai.y = canvas.height - ai.height;
+        }
+
+        // Handle user input
+        document.addEventListener('mousemove', (event) => {
+            let rect = canvas.getBoundingClientRect();
+            player.y = event.clientY - rect.top - player.height / 2;
+            // Prevent paddle from going out of bounds
+            if (player.y < 0) player.y = 0;
+            if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+        });
+
+        // Game loop
+        function game() {
+            draw();
+            update();
+            requestAnimationFrame(game);
+        }
+
+        game();
+    </script>
+</body>
+</html>
